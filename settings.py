@@ -80,6 +80,9 @@ TEXTURES = {
     "character-swing-sword": pygame.image.load(
         BASE_DIR / "assets" / "graphics" / "character_swing_sword.png"
     ),
+    "character-shooting-arrow": pygame.image.load(
+        BASE_DIR / "assets" / "graphics" / "character_shooting_arrow.png"
+    ),
     "hearts": pygame.image.load(BASE_DIR / "assets" / "graphics" / "hearts.png"),
     "switches": pygame.image.load(BASE_DIR / "assets" / "graphics" / "switches.png"),
     "entities": pygame.image.load(BASE_DIR / "assets" / "graphics" / "entities.png"),
@@ -97,6 +100,9 @@ FRAMES = {
     "character-walk": frames.generate_frames(TEXTURES["character-walk"], 16, 32),
     "character-swing-sword": frames.generate_frames(
         TEXTURES["character-swing-sword"], 32, 32
+    ),
+    "character-shooting-arrow": frames.generate_frames(
+        TEXTURES["character-shooting-arrow"], 32, 32
     ),
     "hearts": frames.generate_frames(TEXTURES["hearts"], 16, 16),
     "switches": frames.generate_frames(TEXTURES["switches"], 16, 18),

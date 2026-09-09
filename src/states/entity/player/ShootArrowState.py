@@ -35,7 +35,8 @@ class ShootArrowState(BaseEntityState):
         self.entity.offset_x = 8
 
         direction = self.entity.direction
-        self.entity.change_animation(f"sword-{direction}")
+        # Use shoot animation matching the direction
+        self.entity.change_animation(f"shoot-{direction}")
 
     def enter(self) -> None:
         self.fired = False

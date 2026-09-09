@@ -62,6 +62,30 @@ ENTITY_DEFS: Dict[str, Dict[str, Any]] = {
                 "loops": 1,
                 "texture": "character-swing-sword",
             },
+            "shoot-left": {
+                "frames": [13, 14, 15, 16],
+                "interval": 0.05,
+                "loops": 1,
+                "texture": "character-shooting-arrow",
+            },
+            "shoot-right": {
+                "frames": [9, 10, 11, 12],
+                "interval": 0.05,
+                "loops": 1,
+                "texture": "character-shooting-arrow",
+            },
+            "shoot-down": {
+                "frames": [1, 2, 3, 4],
+                "interval": 0.05,
+                "loops": 1,
+                "texture": "character-shooting-arrow",
+            },
+            "shoot-up": {
+                "frames": [5, 6, 7, 8],
+                "interval": 0.05,
+                "loops": 1,
+                "texture": "character-shooting-arrow",
+            },
             "pot-lift-down": {
                 "frames": [1, 2, 3],
                 "interval": 0.1,
