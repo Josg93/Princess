@@ -18,6 +18,7 @@ from src.definitions.entity import ENTITY_DEFS
 from src.definitions.game_objects import GAME_OBJECT_DEFS
 from src.Entity import Entity
 from src.GameObject import GameObject
+from src.Bow import Bow
 from src.states.entity.EntityIdleState import EntityIdleState
 from src.states.entity.EntityWalkState import EntityWalkState
 from src.world.Doorway import Doorway
@@ -128,6 +129,8 @@ class Room:
 
         self.player.update(dt)
 
+
+        # manejar entidades
         for entity in self.entities:
             if entity.health <= 0:
                 entity.dead = True
@@ -159,6 +162,7 @@ class Room:
 
         self.entities = [entity for entity in self.entities if not entity.dead]
 
+        #manejar objetos
         for obj in list(self.objects):
             obj.update(dt)
 
@@ -172,6 +176,8 @@ class Room:
                     obj.on_consume(self.player, obj)
                     self.objects.remove(obj)
 
+
+        #manejar proyectiles
         for projectile in list(self.projectiles):
             projectile.update(dt)
 
@@ -186,6 +192,8 @@ class Room:
 
             if projectile.dead:
                 self.projectiles.remove(projectile)
+
+
 
     def _push_player_out_of(self, obj: GameObject) -> None:
         player = self.player
@@ -231,23 +239,32 @@ class Room:
         player_row = int((player_y + player_height / 2) // settings.TILE_SIZE)
 
         for obj in self.objects:
-            if not obj.takeable:
+            if obj.type not in ["pot","chest"]:
                 continue
-
+            
             obj_col = int((obj.x + obj.width / 2) // settings.TILE_SIZE)
             obj_row = int((obj.y + obj.height / 2) // settings.TILE_SIZE)
-
             adjacent = (
                 (player.direction == "right" and obj_row == player_row and obj_col == player_col + 1)
                 or (player.direction == "left" and obj_row == player_row and obj_col == player_col - 1)
                 or (player.direction == "up" and obj_col == player_col and obj_row == player_row - 1)
                 or (player.direction == "down" and obj_col == player_col and obj_row == player_row + 1)
             )
-
             if adjacent:
-                self.objects.remove(obj)
-                player.change_state("pot-lift", pot=obj)
-                return
+                if obj.type == "pot":
+                    self.objects.remove(obj)
+                    player.change_state("pot-lift", pot=obj)
+                    return
+                elif obj.type == "chest":
+                    self.open_chest(obj , player)
+                    return
+            
+    def open_chest(self, chest : TypeVar("GameObject") ,  player : TypeVar("Player") ):
+        if chest.state == "open":
+            return
+        chest.state = "open"
+        player.has_bow = True
+        player.bow = Bow()
 
     def _generate_walls_and_floors(self) -> None:
         """
@@ -284,6 +301,7 @@ class Room:
     def _generate_entities(self) -> None:
         """Randomly creates an assortment of enemies for the player to fight."""
         for _ in range(10):
+            #entidades se genran de forma aleatoria
             enemy_type = random.choice(_ENEMY_TYPES)
             definition = ENTITY_DEFS[enemy_type]
 
@@ -343,12 +361,30 @@ class Room:
 
         switch.on_collide = open_all_doors
 
+
+        # GENERAR POTES Y CHEST
         for y in range(2, self.height):
             for x in range(2, self.width):
                 if random.randint(1, 20) == 1:
                     self.objects.append(
-                        GameObject(GAME_OBJECT_DEFS["pot"], x * 16, y * 16)
+                        GameObject(
+                            GAME_OBJECT_DEFS["pot"],
+                            x * 16,
+                            y *16
+                        )
                     )
+
+        # Generar un único cofre de forma aleatoria en la habitación
+        if random.randint(1, 3) == 1:
+            chest_x = random.randint(2, self.width - 2)
+            chest_y = random.randint(2, self.height - 1)
+            self.objects.append(
+                GameObject(
+                    GAME_OBJECT_DEFS["chest"],
+                    chest_x * 16,
+                    chest_y * 16
+                )
+            )
 
     def render(
         self,

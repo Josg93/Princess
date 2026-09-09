@@ -46,6 +46,9 @@ class PlayState(BaseState):
             "swing-sword": lambda sm: player_states.PlayerSwingSwordState(
                 self.player, sm, self.dungeon
             ),
+            "shoot_arrow": lambda sm: player_states.ShootArrowState(
+                self.player, sm, self.dungeon
+            ),
             "pot-lift": lambda sm: player_states.PlayerPotLiftState(
                 self.player, sm, self.dungeon
             ),

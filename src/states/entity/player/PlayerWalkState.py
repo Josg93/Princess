@@ -110,6 +110,9 @@ class PlayerWalkState(BaseEntityState):
             self.entity.change_state("swing-sword")
         elif input_id == "enter" and input_data.pressed:
             self.dungeon.current_room.take_adjacent_pot(self.entity)
+        elif (input_id == "bow" or input_id == "fire_bow") and input_data.pressed:
+            if self.entity.has_bow and not getattr(self.entity.state_machine.current, "pot", None):
+                self.entity.change_state("shoot_arrow")
 
     def render(self, surface: pygame.Surface) -> None:
         anim = self.entity.current_animation

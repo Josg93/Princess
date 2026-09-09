@@ -19,6 +19,9 @@ class Player(Entity):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
+        self.has_bow = False
+        self.bow = None
+
         # Tracks which movement keys are currently held down (as opposed to
         # sword/take, which are edge-triggered through on_input directly),
         # since every player state polls this once per frame in the same

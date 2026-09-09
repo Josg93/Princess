@@ -20,6 +20,7 @@ class GameObject:
         self.type = definition["type"]
         self.texture_id = definition["texture"]
         self.frame_index = definition.get("frame", 1)
+        self.frames = definition.get("frames")
 
         # Whether it acts as an obstacle or not.
         self.solid = definition["solid"]
@@ -50,9 +51,20 @@ class GameObject:
         pass
 
     def render(self, surface: pygame.Surface, offset_x: float = 0, offset_y: float = 0) -> None:
-        frame_index = self.states[self.state].get("frame", self.frame_index)
-        surface.blit(
-            settings.TEXTURES[self.texture_id],
-            (self.x + offset_x, self.y + offset_y),
-            settings.frame(self.texture_id, frame_index),
-        )
+        state_def = self.states[self.state]
+        frames = state_def.get("frames") or self.frames
+        if frames:
+            for i, frame_index in enumerate(frames):
+                surface.blit(
+                    settings.TEXTURES[self.texture_id],
+                    (self.x + i * settings.TILE_SIZE + offset_x, self.y + offset_y),
+                    settings.frame(self.texture_id, frame_index),
+                )
+        else:
+            frame_index = state_def.get("frame", self.frame_index)
+            surface.blit(
+                settings.TEXTURES[self.texture_id],
+                (self.x + offset_x, self.y + offset_y),
+                settings.frame(self.texture_id, frame_index),
+            )
+            
