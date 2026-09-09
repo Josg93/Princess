@@ -9,6 +9,7 @@ This file contains the class Dungeon.
 """
 
 import math
+import random
 from typing import Callable, TypeVar
 
 import pygame
@@ -47,7 +48,23 @@ class Dungeon:
         PlayerWalkState/PlayerPotWalkState.
         """
         self.shifting = True
-        self.next_room = Room(self.player, self.on_game_over)
+
+        # Determine entry direction and check if we should enter a boss room (only if player has the bow)
+        is_boss = False
+        entry_dir = None
+        if shift_y > 0:
+            entry_dir = "top"
+        elif shift_y < 0:
+            entry_dir = "bottom"
+        elif shift_x > 0:
+            entry_dir = "left"
+        elif shift_x < 0:
+            entry_dir = "right"
+
+        if getattr(self.player, "has_bow", False) and random.randint(1, 4) == 1:
+            is_boss = True
+
+        self.next_room = Room(self.player, self.on_game_over, is_boss_room=is_boss, entry_direction=entry_dir)
 
         # Start all doors in next room as open until we get in.
         for doorway in self.next_room.doorways:

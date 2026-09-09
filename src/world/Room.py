@@ -73,7 +73,8 @@ def _doorway_opening_for(
     """
     for direction, zone in _DOORWAY_ZONES.items():
         if zone.colliderect(rect):
-            return doorways_by_direction[direction].get_collision_rect()
+            if direction in doorways_by_direction:
+                return doorways_by_direction[direction].get_collision_rect()
 
     return None
 
@@ -83,10 +84,14 @@ class Room:
         self,
         player: TypeVar("Player"),
         on_game_over: Callable[[], None],
+        is_boss_room: bool = False,
+        entry_direction: Optional[str] = None,
     ) -> None:
         # Reference to player for collisions, etc.
         self.player = player
         self.on_game_over = on_game_over
+        self.is_boss_room = is_boss_room
+        self.entry_direction = entry_direction
 
         self.width = settings.MAP_WIDTH
         self.height = settings.MAP_HEIGHT
@@ -101,12 +106,18 @@ class Room:
         self._generate_objects()
 
         # Doorways that lead to other dungeon rooms.
-        self.doorways = [
-            Doorway("top", False, self),
-            Doorway("bottom", False, self),
-            Doorway("left", False, self),
-            Doorway("right", False, self),
-        ]
+        if self.is_boss_room and self.entry_direction:
+            # Boss room has only one door (the entry doorway)
+            self.doorways = [
+                Doorway(self.entry_direction, False, self)
+            ]
+        else:
+            self.doorways = [
+                Doorway("top", False, self),
+                Doorway("bottom", False, self),
+                Doorway("left", False, self),
+                Doorway("right", False, self),
+            ]
         self._doorways_by_direction = {
             doorway.direction: doorway for doorway in self.doorways
         }
@@ -299,7 +310,43 @@ class Room:
             self.tiles.append(row)
 
     def _generate_entities(self) -> None:
-        """Randomly creates an assortment of enemies for the player to fight."""
+        """Randomly creates an assortment of enemies for the player to fight, or spawns the boss."""
+        if self.is_boss_room:
+            definition = ENTITY_DEFS["boss"]
+            center_x = settings.VIRTUAL_WIDTH / 2 - 8
+
+            # Position the boss on the side opposite to the entry door
+            if self.entry_direction == "top":
+                spawn_y = settings.MAP_RENDER_OFFSET_Y + settings.MAP_HEIGHT * settings.TILE_SIZE - settings.TILE_SIZE * 4
+                spawn_x = center_x
+            elif self.entry_direction == "bottom":
+                spawn_y = settings.MAP_RENDER_OFFSET_Y + settings.TILE_SIZE * 3
+                spawn_x = center_x
+            elif self.entry_direction == "left":
+                spawn_y = settings.MAP_RENDER_OFFSET_Y + settings.MAP_HEIGHT * settings.TILE_SIZE / 2
+                spawn_x = settings.VIRTUAL_WIDTH - settings.MAP_RENDER_OFFSET_X - settings.TILE_SIZE * 4
+            else:
+                spawn_y = settings.MAP_RENDER_OFFSET_Y + settings.MAP_HEIGHT * settings.TILE_SIZE / 2
+                spawn_x = settings.MAP_RENDER_OFFSET_X + settings.TILE_SIZE * 4
+
+            boss = Entity(
+                x=spawn_x,
+                y=spawn_y,
+                width=16,
+                height=16,
+                walk_speed=25,
+                health=6,
+                animation_defs=definition["animations"],
+                states={},
+            )
+            boss.state_machine.states = {
+                "walk": lambda sm, e=boss: EntityWalkState(e, sm),
+                "idle": lambda sm, e=boss: EntityIdleState(e, sm),
+            }
+            boss.change_state("walk")
+            self.entities.append(boss)
+            return
+
         for _ in range(10):
             #entidades se genran de forma aleatoria
             enemy_type = random.choice(_ENEMY_TYPES)
