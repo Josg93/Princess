@@ -20,7 +20,7 @@ class BaseEntityState(BaseState):
         super().__init__(state_machine)
         self.entity = entity
 
-    def process_ai(self, room: TypeVar("Room"), dt: float) -> None:
+    def process_ai(self, dt: float) -> None:
         """
         AI decision-making for entities driven by Room's update loop, kept
         separate from update() (which just applies movement/collision) so

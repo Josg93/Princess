@@ -93,4 +93,17 @@ GAME_OBJECT_DEFS: Dict[str, Dict[str, Any]] = {
         },
         "on_consume": _pickup_heart,
     },
+    "fireball": {
+        "type": "fireball",
+        "texture": "fireball",
+        "frame": 1,
+        "width": 32,
+        "height": 32,
+        "solid": False,
+        "consumable": False,
+        "default_state": "down",
+        "states": {
+            "down": {"frame": 1},
+        },
+    },
 }

@@ -19,9 +19,10 @@ _MAX_TILES = 4
 
 
 class Projectile:
-    def __init__(self, obj: Any, direction: str) -> None:
+    def __init__(self, obj: Any, direction: str, speed: float = _SPEED) -> None:
         self.obj = obj
         self.direction = direction
+        self.speed = speed
         self.distance = 0.0
         self.dead = False
 
@@ -32,7 +33,7 @@ class Projectile:
         if self.dead:
             return
 
-        d = _SPEED * dt
+        d = self.speed * dt
 
         if self.direction == "up":
             self.obj.y -= d

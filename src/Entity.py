@@ -128,8 +128,8 @@ class Entity:
         if self.current_animation:
             self.current_animation.update(dt)
 
-    def process_ai(self, room: Any, dt: float) -> None:
-        self.state_machine.current.process_ai(room, dt)
+    def process_ai(self , dt: float) -> None:
+        self.state_machine.current.process_ai(dt)
 
     def render_sprite(
         self, surface: pygame.Surface, texture_id: str, frame_index: int

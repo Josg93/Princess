@@ -19,10 +19,11 @@ from src.definitions.game_objects import GAME_OBJECT_DEFS
 from src.Entity import Entity
 from src.GameObject import GameObject
 from src.Bow import Bow
+from src.Boss import Boss
 from src.states.entity.EntityIdleState import EntityIdleState
 from src.states.entity.EntityWalkState import EntityWalkState
 from src.world.Doorway import Doorway
-
+from src.Projectile import Projectile
 _ENEMY_TYPES = ["skeleton", "slime", "bat", "ghost", "spider"]
 
 # Door archway detection zones, in the same room-local coordinates as
@@ -92,7 +93,7 @@ class Room:
         self.on_game_over = on_game_over
         self.is_boss_room = is_boss_room
         self.entry_direction = entry_direction
-
+        self.boss = None
         self.width = settings.MAP_WIDTH
         self.height = settings.MAP_HEIGHT
 
@@ -101,6 +102,9 @@ class Room:
 
         self.entities: List[Entity] = []
         self._generate_entities()
+
+        if self.is_boss_room and self.entities:
+            self.boss = self.entities[0]
 
         self.objects: List[GameObject] = []
         self._generate_objects()
@@ -203,6 +207,10 @@ class Room:
 
             if projectile.dead:
                 self.projectiles.remove(projectile)
+
+        # Actualizar al boss (lógica de ataque, timer y generación de fireballs)
+        if hasattr(self, 'boss') and self.boss and not self.boss.dead:
+            self.boss.update(dt, self)
 
 
 
@@ -315,7 +323,7 @@ class Room:
             definition = ENTITY_DEFS["boss"]
             center_x = settings.VIRTUAL_WIDTH / 2 - 8
 
-            # Position the boss on the side opposite to the entry door
+            # Posicionar el boss al lado opuesto de la puerta
             if self.entry_direction == "top":
                 spawn_y = settings.MAP_RENDER_OFFSET_Y + settings.MAP_HEIGHT * settings.TILE_SIZE - settings.TILE_SIZE * 4
                 spawn_x = center_x
@@ -329,22 +337,17 @@ class Room:
                 spawn_y = settings.MAP_RENDER_OFFSET_Y + settings.MAP_HEIGHT * settings.TILE_SIZE / 2
                 spawn_x = settings.MAP_RENDER_OFFSET_X + settings.TILE_SIZE * 4
 
-            boss = Entity(
+            self.boss = Boss(
                 x=spawn_x,
                 y=spawn_y,
                 width=16,
                 height=16,
-                walk_speed=25,
-                health=6,
                 animation_defs=definition["animations"],
                 states={},
+                player=self.player,
             )
-            boss.state_machine.states = {
-                "walk": lambda sm, e=boss: EntityWalkState(e, sm),
-                "idle": lambda sm, e=boss: EntityIdleState(e, sm),
-            }
-            boss.change_state("walk")
-            self.entities.append(boss)
+            self.boss.attack_timer = self.boss.attack_cooldown
+            self.entities.append(self.boss)
             return
 
         for _ in range(10):
@@ -381,57 +384,58 @@ class Room:
 
     def _generate_objects(self) -> None:
         """Randomly creates an assortment of obstacles for the player to navigate around."""
-        switch = GameObject(
-            GAME_OBJECT_DEFS["switch"],
-            random.randint(
-                settings.MAP_RENDER_OFFSET_X + settings.TILE_SIZE,
-                settings.VIRTUAL_WIDTH - settings.TILE_SIZE * 2 - 16,
-            ),
-            random.randint(
-                settings.MAP_RENDER_OFFSET_Y + settings.TILE_SIZE,
-                settings.MAP_HEIGHT * settings.TILE_SIZE
-                + settings.MAP_RENDER_OFFSET_Y
-                - settings.TILE_SIZE
-                - 16,
-            ),
-        )
-        self.objects.append(switch)
-
-        def open_all_doors() -> None:
-            if switch.state == "unpressed":
-                switch.state = "pressed"
-
-                for doorway in self.doorways:
-                    doorway.open = True
-
-                settings.SOUNDS["door"].play()
-
-        switch.on_collide = open_all_doors
-
-
-        # GENERAR POTES Y CHEST
-        for y in range(2, self.height):
-            for x in range(2, self.width):
-                if random.randint(1, 20) == 1:
-                    self.objects.append(
-                        GameObject(
-                            GAME_OBJECT_DEFS["pot"],
-                            x * 16,
-                            y *16
-                        )
-                    )
-
-        # Generar un único cofre de forma aleatoria en la habitación
-        if random.randint(1, 3) == 1:
-            chest_x = random.randint(2, self.width - 2)
-            chest_y = random.randint(2, self.height - 1)
-            self.objects.append(
-                GameObject(
-                    GAME_OBJECT_DEFS["chest"],
-                    chest_x * 16,
-                    chest_y * 16
-                )
+        if not self.is_boss_room: 
+            switch = GameObject(
+                GAME_OBJECT_DEFS["switch"],
+                random.randint(
+                    settings.MAP_RENDER_OFFSET_X + settings.TILE_SIZE,
+                    settings.VIRTUAL_WIDTH - settings.TILE_SIZE * 2 - 16,
+                ),
+                random.randint(
+                    settings.MAP_RENDER_OFFSET_Y + settings.TILE_SIZE,
+                    settings.MAP_HEIGHT * settings.TILE_SIZE
+                    + settings.MAP_RENDER_OFFSET_Y
+                    - settings.TILE_SIZE
+                    - 16,
+                ),
             )
+            self.objects.append(switch)
+
+            def open_all_doors() -> None:
+                if switch.state == "unpressed":
+                    switch.state = "pressed"
+
+                    for doorway in self.doorways:
+                        doorway.open = True
+
+                    settings.SOUNDS["door"].play()
+
+            switch.on_collide = open_all_doors
+
+
+            # GENERAR POTES Y CHEST
+            for y in range(2, self.height):
+                for x in range(2, self.width):
+                    if random.randint(1, 20) == 1:
+                        self.objects.append(
+                            GameObject(
+                                GAME_OBJECT_DEFS["pot"],
+                                x * 16,
+                                y *16
+                            )
+                        )
+
+            # Generar un único cofre de forma aleatoria en la habitación
+            if random.randint(1, 3) == 1:
+                chest_x = random.randint(2, self.width - 2)
+                chest_y = random.randint(2, self.height - 1)
+                self.objects.append(
+                    GameObject(
+                        GAME_OBJECT_DEFS["chest"],
+                        chest_x * 16,
+                        chest_y * 16
+                    )
+                )
 
     def render(
         self,
@@ -463,6 +467,18 @@ class Room:
         for entity in self.entities:
             if not entity.dead:
                 entity.render(surface, offset_x, offset_y)
+
+        # Draw boss health bar
+        if self.boss and not self.boss.dead:
+            bar_width = 32
+            bar_height = 4
+            bar_x = self.boss.x
+            bar_y = self.boss.y - 8
+            # Background
+            pygame.draw.rect(surface, (60, 60, 60), (bar_x, bar_y, bar_width, bar_height))
+            # Foreground (health)
+            health_width = int((self.boss.health / self.boss.max_health) * bar_width)
+            pygame.draw.rect(surface, (0, 255, 0), (bar_x, bar_y, health_width, bar_height))
 
         # The player and projectiles are drawn using only the camera pan —
         # never this room's own adjacent_offset — matching the original,

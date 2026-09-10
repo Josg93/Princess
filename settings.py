@@ -93,6 +93,7 @@ TEXTURES = {
         BASE_DIR / "assets" / "graphics" / "character_pot_walk.png"
     ),
     "arrows": pygame.image.load(BASE_DIR / "assets" / "graphics" / "arrow.png"),
+    "fireball": pygame.image.load(BASE_DIR / "assets" / "graphics" / "fireball.png"),
 }
 
 FRAMES = {
@@ -110,6 +111,7 @@ FRAMES = {
     "character-pot-lift": frames.generate_frames(TEXTURES["character-pot-lift"], 16, 32),
     "character-pot-walk": frames.generate_frames(TEXTURES["character-pot-walk"], 16, 32),
     "arrows": frames.generate_frames(TEXTURES["arrows"], 32, 32),
+    "fireball": frames.generate_frames(TEXTURES["fireball"], 32, 32),
 }
 
 
