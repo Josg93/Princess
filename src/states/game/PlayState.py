@@ -71,6 +71,10 @@ class PlayState(BaseState):
         self.state_machine.change("game-over", player=self.player)
 
     def update(self, dt: float) -> None:
+        if self.dungeon.current_room.is_boss_room:
+            if self.dungeon.current_room.boss.dead: 
+                self.state_machine.change("win") 
+        
         self.dungeon.update(dt)
 
     def render(self, surface: pygame.Surface) -> None:

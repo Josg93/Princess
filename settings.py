@@ -129,6 +129,7 @@ def frame(texture_id, one_based_index):
 
 FONTS = {
     "princess": pygame.font.Font(BASE_DIR / "assets" / "fonts" / "princess.otf", 32),
+    "win": pygame.font.Font(BASE_DIR / "assets" / "fonts" / "princess.otf", 64),
     "princess-small": pygame.font.Font(
         BASE_DIR / "assets" / "fonts" / "princess.otf", 24
     ),

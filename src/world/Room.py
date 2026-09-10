@@ -141,7 +141,7 @@ class Room:
         # Don't update anything if we are sliding to another room.
         if self.adjacent_offset_x != 0 or self.adjacent_offset_y != 0:
             return
-
+      
         self.player.update(dt)
 
 
