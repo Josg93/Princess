@@ -438,7 +438,7 @@ class Room:
 
             # Generar un único cofre de forma aleatoria en la habitación
             if self.player.has_bow == False:
-                if random.randint(1, 1) == 1:
+                if random.randint(1, 3) == 1:
                     chest_x = random.randint(2, self.width - 2)
                     chest_y = random.randint(2, self.height - 1)
                     self.objects.append(
