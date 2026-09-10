@@ -8,7 +8,7 @@ alejandro.j.mujic4@gmail.com
 This file contains the class Projectile.
 """
 
-from typing import Any
+from typing import Any, Optional
 
 import pygame
 
@@ -19,10 +19,21 @@ _MAX_TILES = 4
 
 
 class Projectile:
-    def __init__(self, obj: Any, direction: str, speed: float = _SPEED) -> None:
+    def __init__(
+        self,
+        obj: Any,
+        direction: str,
+        speed: float = _SPEED,
+        vx: float = 0.0,
+        vy: float = 0.0,
+        max_tiles: Optional[float] = _MAX_TILES,
+    ) -> None:
         self.obj = obj
         self.direction = direction
         self.speed = speed
+        self.vx = vx
+        self.vy = vy
+        self.max_tiles = max_tiles
         self.distance = 0.0
         self.dead = False
 
@@ -35,34 +46,55 @@ class Projectile:
 
         d = self.speed * dt
 
-        if self.direction == "up":
-            self.obj.y -= d
-            limit = settings.MAP_RENDER_OFFSET_Y + settings.TILE_SIZE - self.obj.height / 2
-            if self.obj.y <= limit:
-                self.obj.y = limit
-                self.dead = True
-        elif self.direction == "down":
-            self.obj.y += d
+        if self.vx != 0.0 or self.vy != 0.0:
+            self.obj.x += self.vx * d
+            self.obj.y += self.vy * d
+
+            top_limit = settings.MAP_RENDER_OFFSET_Y + settings.TILE_SIZE - self.obj.height / 2
             bottom_edge = (
                 settings.MAP_HEIGHT * settings.TILE_SIZE
                 + settings.MAP_RENDER_OFFSET_Y
                 - settings.TILE_SIZE
             )
-            if self.obj.y + self.obj.height >= bottom_edge:
-                self.obj.y = bottom_edge - self.obj.height
+            left_limit = settings.MAP_RENDER_OFFSET_X + settings.TILE_SIZE
+            right_limit = settings.VIRTUAL_WIDTH - settings.TILE_SIZE * 2
+
+            if (
+                self.obj.y <= top_limit
+                or self.obj.y + self.obj.height >= bottom_edge
+                or self.obj.x <= left_limit
+                or self.obj.x + self.obj.width >= right_limit
+            ):
                 self.dead = True
-        elif self.direction == "left":
-            self.obj.x -= d
-            limit = settings.MAP_RENDER_OFFSET_X + settings.TILE_SIZE
-            if self.obj.x <= limit:
-                self.obj.x = limit
-                self.dead = True
-        elif self.direction == "right":
-            self.obj.x += d
-            limit = settings.VIRTUAL_WIDTH - settings.TILE_SIZE * 2
-            if self.obj.x + self.obj.width >= limit:
-                self.obj.x = limit - self.obj.width
-                self.dead = True
+        else:
+            if self.direction == "up":
+                self.obj.y -= d
+                limit = settings.MAP_RENDER_OFFSET_Y + settings.TILE_SIZE - self.obj.height / 2
+                if self.obj.y <= limit:
+                    self.obj.y = limit
+                    self.dead = True
+            elif self.direction == "down":
+                self.obj.y += d
+                bottom_edge = (
+                    settings.MAP_HEIGHT * settings.TILE_SIZE
+                    + settings.MAP_RENDER_OFFSET_Y
+                    - settings.TILE_SIZE
+                )
+                if self.obj.y + self.obj.height >= bottom_edge:
+                    self.obj.y = bottom_edge - self.obj.height
+                    self.dead = True
+            elif self.direction == "left":
+                self.obj.x -= d
+                limit = settings.MAP_RENDER_OFFSET_X + settings.TILE_SIZE
+                if self.obj.x <= limit:
+                    self.obj.x = limit
+                    self.dead = True
+            elif self.direction == "right":
+                self.obj.x += d
+                limit = settings.VIRTUAL_WIDTH - settings.TILE_SIZE * 2
+                if self.obj.x + self.obj.width >= limit:
+                    self.obj.x = limit - self.obj.width
+                    self.dead = True
 
         if self.dead:
             settings.SOUNDS["pot-wall"].play()
@@ -70,7 +102,7 @@ class Projectile:
 
         self.distance += d
 
-        if self.distance > _MAX_TILES * settings.TILE_SIZE:
+        if self.max_tiles is not None and self.distance > self.max_tiles * settings.TILE_SIZE:
             self.dead = True
 
     def render(

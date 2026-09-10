@@ -33,7 +33,7 @@ class EntityWalkState(BaseEntityState):
     def update(self, dt: float) -> None:
         self.bumped = move_and_bump(self.entity, dt)
 
-    def process_ai(self, dt: float) -> None:
+    def process_ai(self, room: TypeVar("Room"), dt: float) -> None:
         if self.move_duration == 0 or self.bumped:
             self.move_duration = random.randint(1, 5)
             self.entity.direction = random.choice(_DIRECTIONS)

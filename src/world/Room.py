@@ -169,10 +169,11 @@ class Room:
                 and not self.player.invulnerable
             ):
                 settings.SOUNDS["hit-player"].play()
-                self.player.damage(1)
+                damage_amount = 2 if isinstance(entity, Boss) else 1
+                self.player.damage(damage_amount)
                 self.player.go_invulnerable(1.5)
 
-                if self.player.health == 0:
+                if self.player.health <= 0:
                     self.on_game_over()
 
         self.entities = [entity for entity in self.entities if not entity.dead]
@@ -196,21 +197,29 @@ class Room:
         for projectile in list(self.projectiles):
             projectile.update(dt)
 
-            for entity in self.entities:
-                if projectile.dead:
-                    break
-
-                if not entity.dead and projectile.collides(entity):
-                    entity.damage(1)
-                    settings.SOUNDS["hit-enemy"].play()
+            if projectile.obj.type == "fireball":
+                if not self.player.invulnerable and projectile.collides(self.player):
+                    settings.SOUNDS["hit-player"].play()
+                    self.player.health = 0
                     projectile.dead = True
+                    self.on_game_over()
+            else:
+                for entity in self.entities:
+                    if projectile.dead:
+                        break
+
+                    if not entity.dead and projectile.collides(entity):
+                        if isinstance(entity, Boss):
+                            entity.vulnerable = True
+                            entity.vulnerable_timer = 0.0
+                        entity.damage(1)
+                        settings.SOUNDS["hit-enemy"].play()
+                        projectile.dead = True
 
             if projectile.dead:
                 self.projectiles.remove(projectile)
 
-        # Actualizar al boss (lógica de ataque, timer y generación de fireballs)
-        if hasattr(self, 'boss') and self.boss and not self.boss.dead:
-            self.boss.update(dt, self)
+
 
 
 
@@ -340,11 +349,12 @@ class Room:
             self.boss = Boss(
                 x=spawn_x,
                 y=spawn_y,
-                width=16,
-                height=16,
+                width=37,
+                height=36,
                 animation_defs=definition["animations"],
                 states={},
                 player=self.player,
+                default_texture=definition.get("texture", "boss"),
             )
             self.boss.attack_timer = self.boss.attack_cooldown
             self.entities.append(self.boss)
@@ -373,6 +383,7 @@ class Room:
                 health=1,
                 animation_defs=definition["animations"],
                 states={},
+                default_texture=definition.get("texture", "entities"),
             )
 
             entity.state_machine.states = {
@@ -426,16 +437,17 @@ class Room:
                         )
 
             # Generar un único cofre de forma aleatoria en la habitación
-            if random.randint(1, 3) == 1:
-                chest_x = random.randint(2, self.width - 2)
-                chest_y = random.randint(2, self.height - 1)
-                self.objects.append(
-                    GameObject(
-                        GAME_OBJECT_DEFS["chest"],
-                        chest_x * 16,
-                        chest_y * 16
+            if self.player.has_bow == False:
+                if random.randint(1, 1) == 1:
+                    chest_x = random.randint(2, self.width - 2)
+                    chest_y = random.randint(2, self.height - 1)
+                    self.objects.append(
+                        GameObject(
+                            GAME_OBJECT_DEFS["chest"],
+                            chest_x * 16,
+                            chest_y * 16
+                        )
                     )
-                )
 
     def render(
         self,

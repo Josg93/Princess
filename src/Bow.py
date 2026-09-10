@@ -53,7 +53,7 @@ class Bow:
             x += player.width / 2 - 8
 
         # Create arrow using factory, passing player direction to set its state/sprite frame
-        arrow_obj = self.arrow_factory.create(x, y, {"direction": player.direction})
+        arrow_obj = self.arrow_factory.create(x - 8  , y - 8, {"direction": player.direction})
         # Wrap in Projectile and add to room
         projectile = Projectile(arrow_obj, player.direction)
         room.projectiles.append(projectile)

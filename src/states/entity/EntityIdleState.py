@@ -24,7 +24,7 @@ class EntityIdleState(BaseEntityState):
         self.wait_duration = 0
         self.wait_timer = 0
 
-    def process_ai(self, dt: float) -> None:
+    def process_ai(self, room: TypeVar("Room"), dt: float) -> None:
         if self.wait_duration == 0:
             self.wait_duration = random.randint(1, 5)
         else:

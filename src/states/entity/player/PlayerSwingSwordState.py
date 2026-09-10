@@ -17,6 +17,7 @@ from gale.state import StateMachine
 
 import settings
 from src.states.entity.BaseEntityState import BaseEntityState
+from src.Boss import Boss
 
 
 class PlayerSwingSwordState(BaseEntityState):
@@ -66,8 +67,13 @@ class PlayerSwingSwordState(BaseEntityState):
     def update(self, dt: float) -> None:
         for entity in self.dungeon.current_room.entities:
             if entity.collides(self.sword_hitbox):
-                entity.damage(1)
-                settings.SOUNDS["hit-enemy"].play()
+                if isinstance(entity, Boss):
+                    if entity.vulnerable:
+                        entity.damage(1)
+                        settings.SOUNDS["hit-enemy"].play()
+                else:
+                    entity.damage(1)
+                    settings.SOUNDS["hit-enemy"].play()
 
         if self.entity.current_animation.times_played > 0:
             self.entity.current_animation.times_played = 0

@@ -30,6 +30,7 @@ class Entity:
         health: int,
         animation_defs: Dict[str, Dict[str, Any]],
         states: Dict[str, Any],
+        default_texture: str = "entities",
     ) -> None:
         # In top-down games, there are four directions instead of two.
         self.direction = "down"
@@ -58,7 +59,7 @@ class Entity:
         self.dropped = False
 
         self.current_animation = None
-        self.animations = self._create_animations(animation_defs)
+        self.animations = self._create_animations(animation_defs, default_texture)
         self.state_machine = StateMachine(states)
 
         # When set (screen-space, same coordinates as x/y at render time),
@@ -70,7 +71,7 @@ class Entity:
         self.visibility_clip_rect: Optional[pygame.Rect] = None
 
     def _create_animations(
-        self, animation_defs: Dict[str, Dict[str, Any]]
+        self, animation_defs: Dict[str, Dict[str, Any]], default_texture: str = "entities"
     ) -> Dict[str, Animation]:
         animations = {}
 
@@ -80,7 +81,7 @@ class Entity:
                 definition.get("interval", 0),
                 loops=definition.get("loops"),
             )
-            animation.texture_id = definition.get("texture", "entities")
+            animation.texture_id = definition.get("texture", default_texture)
             animations[name] = animation
 
         return animations
@@ -128,8 +129,8 @@ class Entity:
         if self.current_animation:
             self.current_animation.update(dt)
 
-    def process_ai(self , dt: float) -> None:
-        self.state_machine.current.process_ai(dt)
+    def process_ai(self, room: Any, dt: float) -> None:
+        self.state_machine.current.process_ai(room, dt)
 
     def render_sprite(
         self, surface: pygame.Surface, texture_id: str, frame_index: int

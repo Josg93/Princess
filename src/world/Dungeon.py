@@ -61,7 +61,7 @@ class Dungeon:
         elif shift_x < 0:
             entry_dir = "right"
 
-        if getattr(self.player, "has_bow", False) and random.randint(1, 4) == 1:
+        if getattr(self.player, "has_bow", False) and random.randint(1, 1) == 1:
             is_boss = True
 
         self.next_room = Room(self.player, self.on_game_over, is_boss_room=is_boss, entry_direction=entry_dir)
